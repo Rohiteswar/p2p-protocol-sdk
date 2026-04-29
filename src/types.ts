@@ -1,63 +1,40 @@
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
-// ── Enums ──────────────────────────────────────────────────────────────────
-
 export enum Side {
-  Bid = 0, // wants to BUY base token, pays quote
-  Ask = 1, // wants to SELL base token, receives quote
+  Bid = 0,
+  Ask = 1,
 }
 
 export enum OrderType {
-  Limit    = 0, // rests in book until filled, cancelled, or expired
-  IOC      = 1, // fill what's possible now, cancel the rest
-  FOK      = 2, // fill all or cancel entirely
-  PostOnly = 3, // only accepted if it doesn't immediately cross
+  Limit    = 0,
+  IOC      = 1,
+  FOK      = 2,
+  PostOnly = 3,
 }
 
-// ── Account layouts ────────────────────────────────────────────────────────
-
-/**
- * On-chain Market account.
- * PDA seeds: ["market", baseMint, quoteMint]
- */
 export interface Market {
-  /** 8-byte discriminator */
-  discriminator : Buffer;
-  baseMint      : PublicKey;
-  quoteMint     : PublicKey;
-  /** PDA token account holding escrowed base tokens */
-  baseVault     : PublicKey;
-  /** PDA token account holding escrowed quote tokens */
-  quoteVault    : PublicKey;
-  /** Can update fee_bps */
-  authority     : PublicKey;
-  /** Minimum price increment in raw quote token units */
-  tickSize      : BN;
-  /** Minimum order size in raw base token units */
-  lotSize       : BN;
-  /** Protocol fee in basis points (e.g. 20 = 0.20%) */
-  feeBps           : number;
-  bump             : number;
-  baseVaultBump    : number;
-  quoteVaultBump   : number;
+  discriminator  : Buffer;
+  baseMint       : PublicKey;
+  quoteMint      : PublicKey;
+  baseVault      : PublicKey;
+  quoteVault     : PublicKey;
+  authority      : PublicKey;
+  tickSize       : BN;
+  lotSize        : BN;
+  feeBps         : number;
+  bump           : number;
+  baseVaultBump  : number;
+  quoteVaultBump : number;
 }
 
-/**
- * On-chain Order account.
- * PDA seeds: ["order", market, owner, orderId (8 bytes LE)]
- */
 export interface Order {
   discriminator : Buffer;
   market        : PublicKey;
   owner         : PublicKey;
-  /** Price in tick_size units */
   price         : BN;
-  /** Original quantity in lot_size units */
   origQty       : BN;
-  /** How much has been filled so far */
   filledQty     : BN;
-  /** Unix timestamp expiry (0 = no expiry) */
   expiry        : BN;
   createdAt     : BN;
   side          : Side;
@@ -65,39 +42,32 @@ export interface Order {
   bump          : number;
 }
 
-// ── Instruction param types ────────────────────────────────────────────────
-
 export interface CreateMarketParams {
-  /** Who pays rent and becomes the market authority */
   payer     : PublicKey;
   baseMint  : PublicKey;
   quoteMint : PublicKey;
   tickSize  : BN;
   lotSize   : BN;
-  /** Basis points, e.g. 20 = 0.20% */
   feeBps    : number;
 }
 
 export interface PlaceOrderParams {
   owner      : PublicKey;
   market     : PublicKey;
-  /** client-chosen unique ID — part of the order PDA seeds */
   orderId    : BN;
   side       : Side;
   orderType  : OrderType;
   price      : BN;
   qty        : BN;
-  /** Unix timestamp; 0 = no expiry */
   expiry     : BN;
-  /** owner's token account to debit (quote if Bid, base if Ask) */
   ownerToken : PublicKey;
 }
 
 export interface FillOrderParams {
-  taker        : PublicKey;
-  order        : PublicKey;
-  market       : PublicKey;
-  fillQty      : BN;
+  taker         : PublicKey;
+  order         : PublicKey;
+  market        : PublicKey;
+  fillQty       : BN;
   takerBaseAta  : PublicKey;
   takerQuoteAta : PublicKey;
   makerBaseAta  : PublicKey;
@@ -118,8 +88,6 @@ export interface ExpireOrderParams {
   owner      : PublicKey;
   ownerToken : PublicKey;
 }
-
-// ── Event types ────────────────────────────────────────────────────────────
 
 export interface MarketCreatedEvent {
   type      : "MarketCreated";
@@ -146,14 +114,14 @@ export interface OrderPlacedEvent {
 }
 
 export interface OrderFilledEvent {
-  type       : "OrderFilled";
-  market     : PublicKey;
-  order      : PublicKey;
-  maker      : PublicKey;
-  taker      : PublicKey;
-  fillPrice  : BN;
-  fillQty    : BN;
-  timestamp  : BN;
+  type      : "OrderFilled";
+  market    : PublicKey;
+  order     : PublicKey;
+  maker     : PublicKey;
+  taker     : PublicKey;
+  fillPrice : BN;
+  fillQty   : BN;
+  timestamp : BN;
 }
 
 export interface OrderCancelledEvent {
